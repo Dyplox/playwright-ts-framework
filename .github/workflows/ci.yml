@@ -92,7 +92,7 @@ jobs:
 
       - name: Toolshop logs
         if: ${{ failure() }}
-        run: docker compose -f .toolshop/docker-compose.prod.yml logs --tail=200
+        run: ./scripts/toolshop.sh logs
 
   report:
     name: Merge reports

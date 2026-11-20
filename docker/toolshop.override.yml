@@ -1,0 +1,23 @@
+# Overrides for upstream .toolshop/docker-compose.prod.yml (applied by scripts/toolshop.sh).
+# Relative paths resolve against the upstream checkout (the first compose file).
+#
+# Why: the published images don't share an architecture.
+#   - sprint5-api / sprint5-ui: linux/amd64 only -> pin the platform (emulated on Apple Silicon).
+#   - web (nginx) and cron:     linux/arm64 only -> they fail on amd64 CI runners.
+# `web` is just nginx + one vhost file, so we build it from upstream's own Dockerfile on a
+# multi-arch base: native on any host. `cron` is not needed by the tests, so it is disabled.
+services:
+  laravel-api:
+    platform: linux/amd64
+
+  angular-ui:
+    platform: linux/amd64
+
+  web:
+    image: toolshop-web:local
+    build:
+      context: ./_docker
+      dockerfile: web.docker
+
+  cron:
+    profiles: ['cron']

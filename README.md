@@ -48,6 +48,7 @@ playwright-ts-framework/
 │   ├── a11y/         (milestone 3)
 │   └── visual/       (milestone 4)
 ├── scripts/toolshop.sh   Start/seed/stop Toolshop in Docker (pinned upstream revision)
+├── docker/toolshop.override.yml   Compose overrides: per-service platforms, multi-arch nginx
 ├── playwright.config.ts
 └── .github/workflows/ci.yml
 ```

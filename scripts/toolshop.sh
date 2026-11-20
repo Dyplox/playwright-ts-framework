@@ -4,6 +4,7 @@
 #
 #   ./scripts/toolshop.sh up      # clone (pinned), start, seed, wait until healthy
 #   ./scripts/toolshop.sh seed    # reset the database to the seeded state
+#   ./scripts/toolshop.sh logs    # last lines of every container
 #   ./scripts/toolshop.sh down    # stop and remove containers + volumes
 set -euo pipefail
 
@@ -11,11 +12,10 @@ set -euo pipefail
 TOOLSHOP_REF="${TOOLSHOP_REF:-ae7caecb811dd8952c09d997e69be7cb946ecd44}"
 SPRINT="${SPRINT:-sprint5}"
 DIR="${TOOLSHOP_DIR:-.toolshop}"
-COMPOSE=(docker compose -f "$DIR/docker-compose.prod.yml")
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Upstream compose + our overrides (per-service platforms, multi-arch nginx, no cron).
+COMPOSE=(docker compose -p toolshop -f "$DIR/docker-compose.prod.yml" -f "$ROOT/docker/toolshop.override.yml")
 export SPRINT DISABLE_LOGGING="${DISABLE_LOGGING:-true}"
-# Upstream images are published for linux/amd64 only. Declaring it avoids the platform warning
-# on Apple Silicon (Docker runs them through emulation).
-export DOCKER_DEFAULT_PLATFORM="${DOCKER_DEFAULT_PLATFORM:-linux/amd64}"
 
 wait_for() {
   local name="$1" url="$2" tries="${3:-90}"
@@ -55,12 +55,13 @@ seed() {
 case "${1:-up}" in
   up)
     clone
-    "${COMPOSE[@]}" up -d --quiet-pull
+    "${COMPOSE[@]}" up -d --build --quiet-pull
     seed
     wait_for "API" "http://localhost:8091/status"
     wait_for "UI" "http://localhost:4200"
     ;;
   seed) seed ;;
+  logs) "${COMPOSE[@]}" logs --tail=200 ;;
   down) "${COMPOSE[@]}" down -v ;;
-  *) echo "Usage: $0 {up|seed|down}" >&2; exit 2 ;;
+  *) echo "Usage: $0 {up|seed|logs|down}" >&2; exit 2 ;;
 esac
