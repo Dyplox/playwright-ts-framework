@@ -1,0 +1,12 @@
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/allure-results/
+/allure-report/
+/.auth/
+.env
+.DS_Store
+/.toolshop/
+.idea/
+_to_delete/

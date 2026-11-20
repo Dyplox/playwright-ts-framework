@@ -1,0 +1,29 @@
+import type { Locator, Page } from '@playwright/test';
+
+/**
+ * Login form. Only the login tests drive it: every other authenticated test
+ * starts already signed in through the API + storageState.
+ */
+export class LoginPage {
+  readonly email: Locator;
+  readonly password: Locator;
+  readonly submit: Locator;
+  readonly error: Locator;
+
+  constructor(private readonly page: Page) {
+    this.email = page.getByTestId('email');
+    this.password = page.getByTestId('password');
+    this.submit = page.getByTestId('login-submit');
+    this.error = page.getByTestId('login-error');
+  }
+
+  async goto(): Promise<void> {
+    await this.page.goto('/auth/login');
+  }
+
+  async login(email: string, password: string): Promise<void> {
+    await this.email.fill(email);
+    await this.password.fill(password);
+    await this.submit.click();
+  }
+}

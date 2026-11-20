@@ -1,0 +1,9 @@
+node_modules
+playwright-report
+blob-report
+test-results
+allure-results
+allure-report
+.auth
+package-lock.json
+.toolshop
