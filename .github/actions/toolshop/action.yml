@@ -1,0 +1,18 @@
+name: Start Toolshop
+description: >
+  Restores the Toolshop Docker images saved by the `images` job (no Docker Hub pulls when the
+  cache is warm), then starts, seeds and health-checks the stack.
+runs:
+  using: composite
+  steps:
+    - name: Restore Toolshop images
+      uses: actions/cache/restore@v4
+      with:
+        path: /tmp/toolshop-images.tar
+        key: toolshop-images-${{ hashFiles('scripts/toolshop.sh', 'docker/toolshop.override.yml') }}
+    - name: Load images
+      shell: bash
+      run: ./scripts/toolshop.sh load /tmp/toolshop-images.tar
+    - name: Start, seed and wait
+      shell: bash
+      run: ./scripts/toolshop.sh up

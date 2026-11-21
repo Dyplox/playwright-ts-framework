@@ -50,7 +50,7 @@ test.describe('Accessibility – public pages', { tag: '@a11y' }, () => {
 });
 
 test.describe('Accessibility – customer area', { tag: '@a11y' }, () => {
-  test.use({ authenticated: true });
+  test.use({ role: 'customer' });
 
   test('my account', async ({ accountPage, expectAccessible }) => {
     await accountPage.goto();

@@ -10,6 +10,7 @@
   },
   "scripts": {
     "test": "playwright test --project=api --project=chromium --project=firefox --project=webkit",
+    "test:unit": "cross-env SKIP_HEALTHCHECK=1 playwright test --project=unit",
     "test:smoke": "playwright test --grep @smoke",
     "test:e2e": "playwright test --grep @e2e --project=chromium --project=firefox --project=webkit",
     "test:mock": "playwright test --grep @mock --project=chromium",
@@ -37,6 +38,8 @@
     "@lhci/cli": "^0.16.1",
     "@playwright/test": "1.65.1",
     "@types/node": "^24.0.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "allure-commandline": "^2.46.1",
     "allure-playwright": "^3.15.0",
     "cross-env": "^10.0.0",
@@ -46,6 +49,7 @@
     "eslint-plugin-playwright": "^2.12.2",
     "prettier": "^3.10.1",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.73.0"
+    "typescript-eslint": "^8.73.0",
+    "zod": "^4.6.7"
   }
 }

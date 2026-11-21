@@ -54,7 +54,11 @@ export async function auditA11y(
   return report;
 }
 
-function classify(violations: Result[]): A11yReport {
+/** Splits axe violations (one entry per offending node) into new vs documented exceptions. */
+export function classify(
+  violations: Pick<Result, 'id' | 'impact' | 'help' | 'helpUrl' | 'nodes'>[],
+  exceptions: readonly A11yException[] = A11Y_EXCEPTIONS,
+): A11yReport {
   const report: A11yReport = { violations: [], accepted: [] };
   for (const v of violations) {
     for (const node of v.nodes) {
@@ -66,7 +70,7 @@ function classify(violations: Result[]): A11yReport {
         helpUrl: v.helpUrl,
         targets: [target],
       };
-      const exception = A11Y_EXCEPTIONS.find((e) => e.rule === v.id && target.includes(e.target));
+      const exception = exceptions.find((e) => e.rule === v.id && target.includes(e.target));
       if (exception) report.accepted.push({ ...entry, exception });
       else report.violations.push(entry);
     }

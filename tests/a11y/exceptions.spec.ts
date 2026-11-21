@@ -13,6 +13,8 @@ import { A11Y_EXCEPTIONS } from '@a11y/exceptions';
  */
 test.describe('Accessibility – exceptions list', { tag: '@a11y' }, () => {
   test('every documented exception still reproduces', async ({ api, page, catalogPage }, testInfo) => {
+    // Two full-page axe scans + API setup: allow more time when the machine is busy.
+    test.slow();
     const matched = new Set<string>();
     const collect = async () => {
       const report = await auditA11y(page, testInfo);

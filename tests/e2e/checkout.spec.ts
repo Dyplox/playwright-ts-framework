@@ -2,6 +2,7 @@ import { test, expect } from '@fixtures';
 import { env } from '@config/env';
 import { plainPurchasableProducts } from '@data/catalog.queries';
 import { createCart, type SeededCart } from '@data/factories/cart.factory';
+import { requireAddress } from '@data/user.queries';
 import { mockPaymentDeclined, mockPostcodeLookupDown } from '@mocks/api-mocks';
 import { useCartInBrowser } from '@utils/browser-cart';
 
@@ -12,7 +13,7 @@ const bankTransfer = {
 };
 
 test.describe('Checkout', { tag: ['@e2e', '@regression'] }, () => {
-  test.use({ authenticated: true });
+  test.use({ role: 'customer' });
 
   let cart: SeededCart;
 
@@ -35,11 +36,8 @@ test.describe('Checkout', { tag: ['@e2e', '@regression'] }, () => {
     const me = await userApi.me();
     // The address step resolves street/city from postcode + house number. Ask the same
     // service what it will answer, so the expectation is exact instead of "not empty".
-    const resolved = await api.postcodeLookup(
-      me.address.country,
-      me.address.postal_code,
-      me.address.house_number,
-    );
+    const { country, postalCode, houseNumber } = requireAddress(me);
+    const resolved = await api.postcodeLookup(country, postalCode, houseNumber);
 
     await checkoutPage.goto();
 
@@ -51,7 +49,7 @@ test.describe('Checkout', { tag: ['@e2e', '@regression'] }, () => {
 
     await test.step('billing address: postcode from the profile, street resolved by the lookup', async () => {
       await checkoutPage.continueAsLoggedInCustomer();
-      await expect(checkoutPage.address.postalCode).toHaveValue(me.address.postal_code);
+      await expect(checkoutPage.address.postalCode).toHaveValue(postalCode);
       await expect(checkoutPage.address.street).toHaveValue(resolved.street);
       await expect(checkoutPage.address.city).toHaveValue(resolved.city);
       await checkoutPage.confirmBillingAddress();

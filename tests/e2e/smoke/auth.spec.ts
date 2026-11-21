@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures';
 
 test.describe('Authenticated session (API login + storageState)', { tag: '@smoke' }, () => {
-  test.use({ authenticated: true });
+  test.use({ role: 'customer' });
 
   test('lands on My account without touching the login form', async ({ page, userApi, accountPage }) => {
     const me = await userApi.me();

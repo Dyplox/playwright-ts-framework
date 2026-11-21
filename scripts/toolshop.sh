@@ -6,6 +6,8 @@
 #   ./scripts/toolshop.sh seed    # reset the database to the seeded state
 #   ./scripts/toolshop.sh logs    # last lines of every container
 #   ./scripts/toolshop.sh down    # stop and remove containers + volumes
+#   ./scripts/toolshop.sh save <file.tar>   # pull/build every image and save them (CI cache)
+#   ./scripts/toolshop.sh load <file.tar>   # load images saved before (no Docker Hub pulls)
 set -euo pipefail
 
 # Pin the upstream revision so the app (and therefore screenshots/budgets) never changes under our feet.
@@ -54,10 +56,17 @@ seed() {
   return 1
 }
 
+images() {
+  "${COMPOSE[@]}" config --images | sort -u
+}
+
 case "${1:-up}" in
   up)
     clone
-    "${COMPOSE[@]}" up -d --build --quiet-pull
+    # nginx is built locally; skip the build when the image is already there (e.g. loaded from cache).
+    BUILD=(--build)
+    docker image inspect toolshop-web:local > /dev/null 2>&1 && BUILD=()
+    "${COMPOSE[@]}" up -d "${BUILD[@]}" --quiet-pull
     seed
     wait_for "API" "http://localhost:8091/status"
     wait_for "UI" "http://localhost:4200"
@@ -65,5 +74,19 @@ case "${1:-up}" in
   seed) seed ;;
   logs) "${COMPOSE[@]}" logs --tail=200 ;;
   down) "${COMPOSE[@]}" down -v ;;
-  *) echo "Usage: $0 {up|seed|logs|down}" >&2; exit 2 ;;
+  save)
+    FILE="${2:?usage: $0 save <file.tar>}"
+    clone
+    "${COMPOSE[@]}" pull --quiet --ignore-buildable
+    "${COMPOSE[@]}" build --quiet
+    # shellcheck disable=SC2207 # image references never contain spaces (bash 3.2 compatible on macOS)
+    IMAGES=($(images))
+    echo "Saving ${#IMAGES[@]} images to $FILE: ${IMAGES[*]}"
+    docker save -o "$FILE" "${IMAGES[@]}"
+    ;;
+  load)
+    FILE="${2:?usage: $0 load <file.tar>}"
+    if [ -f "$FILE" ]; then docker load -q -i "$FILE"; else echo "No image archive at $FILE, images will be pulled."; fi
+    ;;
+  *) echo "Usage: $0 {up|seed|logs|down|save <file>|load <file>}" >&2; exit 2 ;;
 esac

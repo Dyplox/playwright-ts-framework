@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       grep:
-        description: 'Tag filter for the functional suite, e.g. @smoke, @e2e, @a11y, @mock (empty = everything)'
+        description: 'Tag filter for the functional suite, e.g. @smoke, @e2e, @a11y, @mock, @contract (empty = everything)'
         required: false
         default: ''
   # Reused by nightly.yml
@@ -30,20 +30,34 @@ permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Lint, format & types
+  # ---------------------------------------------------------------- preparation
+  images:
+    name: Toolshop images (cache)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - id: cache
+        uses: actions/cache@v4
         with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
+          path: /tmp/toolshop-images.tar
+          key: toolshop-images-${{ hashFiles('scripts/toolshop.sh', 'docker/toolshop.override.yml') }}
+          lookup-only: true
+      - name: Pull/build and save images
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: ./scripts/toolshop.sh save /tmp/toolshop-images.tar
+
+  quality:
+    name: Lint, format, types & unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
       - run: npm run typecheck
       - run: npm run format:check
       - name: ESLint (+ JSON report for SonarCloud)
         run: npx eslint . -f json -o eslint-report.json || npx eslint .
+      - name: Unit tests (framework internals, no browser)
+        run: npm run test:unit -- --reporter=list
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
@@ -73,9 +87,10 @@ jobs:
         env:
           SONAR_HOST_URL: https://sonarcloud.io
 
+  # ---------------------------------------------------------------- test suites
   e2e:
     name: Functional shard ${{ matrix.shard }}/4
-    needs: quality
+    needs: [quality, images]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -84,21 +99,14 @@ jobs:
         shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-
+      - uses: ./.github/actions/setup
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: pw-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium firefox webkit
-
-      - name: Start Toolshop (Docker)
-        run: ./scripts/toolshop.sh up
+      - uses: ./.github/actions/toolshop
 
       - name: API + Chromium + Firefox + WebKit (shard ${{ matrix.shard }}/4)
         run: >
@@ -131,20 +139,44 @@ jobs:
         if: ${{ failure() }}
         run: ./scripts/toolshop.sh logs
 
+  burn-in:
+    name: Burn-in of changed tests (flaky detection)
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: [quality, images]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git fetch --no-tags origin "${{ github.base_ref }}"
+      - uses: ./.github/actions/setup
+      - run: npx playwright install --with-deps chromium
+      - uses: ./.github/actions/toolshop
+      # Only specs affected by this PR (changed files and everything importing them),
+      # 5 times each, no retries: anything flaky fails here instead of on main.
+      - name: Repeat affected tests 5x
+        run: >
+          npx playwright test --project=api --project=chromium
+          --only-changed="origin/${{ github.base_ref }}" --repeat-each=5 --retries=0
+          --fail-on-flaky-tests --pass-with-no-tests --reporter=list
+      - name: Upload failures
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: failures-burn-in
+          path: test-results
+          retention-days: 7
+
   visual:
     name: Visual regression (3 viewports)
-    needs: quality
+    needs: [quality, images]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - name: Start Toolshop (Docker)
-        run: ./scripts/toolshop.sh up
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/toolshop
       - name: Check baselines exist
         run: |
           if ! ls tests/__screenshots__/visual-*/*-linux.png >/dev/null 2>&1; then
@@ -178,18 +210,13 @@ jobs:
 
   lighthouse:
     name: Lighthouse CI budgets
-    needs: quality
+    needs: [quality, images]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - name: Start Toolshop (Docker)
-        run: ./scripts/toolshop.sh up
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/toolshop
       - name: Lighthouse CI (accessibility & best-practices gate, performance budgets)
         run: npm run lighthouse
       - uses: actions/upload-artifact@v4
@@ -199,26 +226,28 @@ jobs:
           path: lhci-report
           retention-days: 14
 
+  # ---------------------------------------------------------------- reporting
   report:
     name: Merge reports
     needs: [e2e, visual, lighthouse]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/setup
 
       - uses: actions/download-artifact@v4
         with:
           path: all-blob-reports
           pattern: blob-report-*
           merge-multiple: true
-      - name: Single HTML report from every shard and job
-        run: npx playwright merge-reports --reporter html ./all-blob-reports
+      - name: One HTML (+ JSON) report from every shard and job
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: results.json
+        run: npx playwright merge-reports --reporter html,json ./all-blob-reports
 
       - uses: actions/download-artifact@v4
         with:
@@ -238,6 +267,18 @@ jobs:
         with:
           name: lighthouse-report
           path: lhci-report
+
+      - name: Run summary
+        run: |
+          node scripts/ci-summary.mjs results.json lhci-report > summary.md
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Sticky PR comment
+        if: ${{ github.event_name == 'pull_request' }}
+        continue-on-error: true # forks get a read-only token
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: test-summary
+          path: summary.md
 
       - name: Assemble site
         run: ./scripts/build-site.sh site
@@ -266,3 +307,19 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Single required check for branch protection: green only if every suite passed.
+  ci-result:
+    name: CI result
+    needs: [quality, e2e, burn-in, visual, lighthouse]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) echo "::error::A required job ended with '$r'"; exit 1 ;; esac
+          done

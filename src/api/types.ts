@@ -1,4 +1,30 @@
-/** Subset of the Toolshop API contract used by the framework. */
+import type { z } from 'zod';
+import type {
+  AddressSchema,
+  BrandSchema,
+  CartSchema,
+  CategorySchema,
+  CreatedProductSchema,
+  FavoriteSchema,
+  InvoiceSchema,
+  LoginResponseSchema,
+  PostcodeLookupSchema,
+  ProductSchema,
+  UserSchema,
+} from './schemas';
+
+/** Response types are inferred from the consumer contract (src/api/schemas.ts). */
+export type Brand = z.infer<typeof BrandSchema>;
+export type Category = z.infer<typeof CategorySchema>;
+export type Product = z.infer<typeof ProductSchema>;
+export type CreatedProduct = z.infer<typeof CreatedProductSchema>;
+export type User = z.infer<typeof UserSchema>;
+export type LoginResponse = z.infer<typeof LoginResponseSchema>;
+export type Favorite = z.infer<typeof FavoriteSchema>;
+export type Cart = z.infer<typeof CartSchema>;
+export type Invoice = z.infer<typeof InvoiceSchema>;
+export type PostcodeLookup = z.infer<typeof PostcodeLookupSchema>;
+export type ResponseAddress = z.infer<typeof AddressSchema>;
 
 export interface Paginated<T> {
   current_page: number;
@@ -10,32 +36,7 @@ export interface Paginated<T> {
   total: number;
 }
 
-export interface Brand {
-  id: string;
-  name: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  parent_id: string | null;
-}
-
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  is_location_offer: boolean;
-  is_rental: boolean;
-  in_stock: boolean;
-  is_eco_friendly?: boolean;
-  co2_rating?: string;
-  brand: Brand;
-  category: Category;
-}
-
+/** Request payloads (what the framework sends). */
 export interface Address {
   street: string;
   house_number?: string;
@@ -55,41 +56,13 @@ export interface NewUser {
   password: string;
 }
 
-export interface User extends Omit<NewUser, 'password'> {
-  id: string;
-}
-
-export interface LoginResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-}
-
-export interface Favorite {
-  id: string;
-  product_id: string;
-  product?: Product;
-}
-
-export interface PostcodeLookup {
-  street: string;
-  house_number: string;
-  city: string;
-  state: string;
-  country: string;
-  postcode: string;
-}
-
-export interface Invoice {
-  id: string;
-  invoice_number: string;
-  invoice_date: string;
-  total: number;
-  billing_street: string;
-  status: string;
-}
-
-export interface Cart {
-  id: string;
-  cart_items: Array<{ id: string; quantity: number; product_id: string; product?: Product }>;
+export interface NewProduct {
+  name: string;
+  description: string;
+  price: number;
+  category_id: string;
+  brand_id: string;
+  product_image_id: string;
+  is_location_offer: boolean;
+  is_rental: boolean;
 }

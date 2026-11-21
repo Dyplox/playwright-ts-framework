@@ -9,6 +9,35 @@ const allureReporter: ReporterDescription = [
     resultsDir: 'allure-results',
     detail: true,
     suiteTitle: true,
+    // Triage at a glance: is it the product, the test, or the infrastructure?
+    categories: [
+      {
+        name: 'Infrastructure (app or network unavailable)',
+        messageRegex: '.*(ECONNREFUSED|ECONNRESET|net::ERR_|is not reachable|503 Service Unavailable).*',
+        matchedStatuses: ['failed', 'broken'],
+      },
+      {
+        name: 'Visual differences',
+        messageRegex: '.*(toHaveScreenshot|Screenshot comparison failed|pixels .* are different).*',
+        matchedStatuses: ['failed'],
+      },
+      {
+        name: 'Accessibility violations',
+        messageRegex: '.*WCAG 2\\.1 AA violations.*',
+        matchedStatuses: ['failed'],
+      },
+      {
+        name: 'API contract broken',
+        messageRegex: '.*(Contract violation|does not match the OpenAPI).*',
+        matchedStatuses: ['failed'],
+      },
+      {
+        name: 'Test defects (locators, timeouts, code)',
+        messageRegex: '.*(TimeoutError|locator\\.|TypeError|ReferenceError|strict mode violation).*',
+        matchedStatuses: ['failed', 'broken'],
+      },
+      { name: 'Product defects (assertion failed)', matchedStatuses: ['failed'] },
+    ],
     environmentInfo: {
       environment: env.name,
       base_url: env.baseURL,
@@ -26,6 +55,7 @@ const reporter: ReporterDescription[] = isCI
 const API_TESTS = /tests[\\/]api[\\/]/;
 const A11Y_TESTS = /tests[\\/]a11y[\\/]/;
 const VISUAL_TESTS = /tests[\\/]visual[\\/]/;
+const UNIT_TESTS = /tests[\\/]unit[\\/]/;
 
 export default defineConfig({
   testDir: './tests',
@@ -67,20 +97,27 @@ export default defineConfig({
   },
 
   projects: [
+    // Framework internals (builders, JWT helpers, a11y classification): no app, no browser.
+    { name: 'unit', testDir: './tests/unit' },
+
     // Pure API checks don't need a browser: run them once, not three times.
     { name: 'api', testDir: './tests/api' },
 
     // Functional suite in the three engines. axe results don't depend on the engine,
     // so accessibility runs once (Chromium) to save CI minutes.
-    { name: 'chromium', testIgnore: [API_TESTS, VISUAL_TESTS], use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      testIgnore: [API_TESTS, VISUAL_TESTS, UNIT_TESTS],
+      use: { ...devices['Desktop Chrome'] },
+    },
     {
       name: 'firefox',
-      testIgnore: [API_TESTS, VISUAL_TESTS, A11Y_TESTS],
+      testIgnore: [API_TESTS, VISUAL_TESTS, UNIT_TESTS, A11Y_TESTS],
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
-      testIgnore: [API_TESTS, VISUAL_TESTS, A11Y_TESTS],
+      testIgnore: [API_TESTS, VISUAL_TESTS, UNIT_TESTS, A11Y_TESTS],
       use: { ...devices['Desktop Safari'] },
     },
 

@@ -1,0 +1,28 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Playwright and its image move together; visual baselines may need the
+      # "Update visual baselines" workflow after this PR.
+      playwright:
+        patterns: ['@playwright/test', 'playwright*']
+      lint-and-types:
+        patterns: ['eslint*', '@eslint/*', 'typescript', 'typescript-eslint', 'prettier', '@types/*']
+      reporting:
+        patterns: ['allure-*', '@lhci/*']
+      test-libraries:
+        patterns: ['@axe-core/*', '@faker-js/*', 'zod', 'ajv*', 'dotenv', 'cross-env']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']

@@ -17,3 +17,4 @@ tests/__screenshots__/**/*-darwin.png
 tests/__screenshots__/**/*-win32.png
 .idea/
 _to_delete/
+Claude outputs/

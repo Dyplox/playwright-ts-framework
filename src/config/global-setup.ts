@@ -6,6 +6,9 @@ import { env } from './env';
  * instead of letting every test time out on its own.
  */
 export default async function globalSetup(_config: FullConfig): Promise<void> {
+  // Unit tests (framework internals) don't need the application.
+  if (process.env.SKIP_HEALTHCHECK === '1') return;
+
   const context = await request.newContext();
   const targets = [
     { name: 'API', url: `${env.apiURL}/status` },

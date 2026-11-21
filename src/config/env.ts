@@ -20,8 +20,11 @@ export interface EnvConfig {
   name: EnvName;
   baseURL: string;
   apiURL: string;
-  /** When true, each worker registers its own customer through the API (full isolation). */
-  canRegisterUsers: boolean;
+  /**
+   * True for private environments (local Docker): tests may create users, products and orders.
+   * False for shared instances: tests reuse seeded accounts and never write catalog data.
+   */
+  ownsData: boolean;
   /** Seeded accounts shipped with Toolshop. Used when registering users is not appropriate. */
   seededCustomers: Credentials[];
   admin: Credentials;
@@ -41,7 +44,7 @@ const environments: Record<EnvName, Omit<EnvConfig, 'name'>> = {
   local: {
     baseURL: 'http://localhost:4200',
     apiURL: 'http://localhost:8091',
-    canRegisterUsers: true,
+    ownsData: true,
     seededCustomers,
     admin,
   },
@@ -49,7 +52,7 @@ const environments: Record<EnvName, Omit<EnvConfig, 'name'>> = {
     baseURL: 'https://practicesoftwaretesting.com',
     apiURL: 'https://api.practicesoftwaretesting.com',
     // Be a good citizen on the shared instance: reuse seeded accounts instead of creating users.
-    canRegisterUsers: false,
+    ownsData: false,
     seededCustomers,
     admin,
   },

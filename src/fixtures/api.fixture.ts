@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base, type WorkerInfo } from '@playwright/test';
 import path from 'node:path';
 import { ApiClient } from '../api/ApiClient';
 import { AuthSession } from '../api/AuthSession';
@@ -8,6 +8,8 @@ import { createCustomer } from '../data/factories/user.factory';
 export interface ApiTestFixtures {
   /** API client authenticated as the worker's customer. */
   userApi: ApiClient;
+  /** API client authenticated as the seeded admin. */
+  adminApi: ApiClient;
 }
 
 export interface ApiWorkerFixtures {
@@ -17,6 +19,17 @@ export interface ApiWorkerFixtures {
   customer: Credentials;
   /** API login + storageState for that customer. */
   authSession: AuthSession;
+  /** API login + storageState for the admin. */
+  adminSession: AuthSession;
+}
+
+function stateFile(workerInfo: WorkerInfo, role: string): string {
+  return path.join(
+    workerInfo.project.outputDir,
+    '..',
+    '.auth',
+    `${workerInfo.project.name}-${role}-worker-${workerInfo.parallelIndex}.json`,
+  );
 }
 
 export const apiTest = base.extend<ApiTestFixtures, ApiWorkerFixtures>({
@@ -31,7 +44,7 @@ export const apiTest = base.extend<ApiTestFixtures, ApiWorkerFixtures>({
 
   customer: [
     async ({ api }, use, workerInfo) => {
-      if (env.canRegisterUsers) {
+      if (env.ownsData) {
         // Full isolation: every worker owns a brand-new customer (cart, favorites, invoices).
         const { credentials } = await createCustomer(api);
         await use(credentials);
@@ -42,23 +55,30 @@ export const apiTest = base.extend<ApiTestFixtures, ApiWorkerFixtures>({
         await use(seeded);
       }
     },
-    { scope: 'worker' },
+    // Registration may be slow (the API checks the password against a breach-list service):
+    // give it its own budget instead of eating the first test's timeout.
+    { scope: 'worker', timeout: 60_000 },
   ],
 
   authSession: [
     async ({ api, customer }, use, workerInfo) => {
-      const stateFile = path.join(
-        workerInfo.project.outputDir,
-        '..',
-        '.auth',
-        `${workerInfo.project.name}-worker-${workerInfo.parallelIndex}.json`,
-      );
-      await use(new AuthSession(api, customer, env.baseURL, stateFile));
+      await use(new AuthSession(api, customer, env.baseURL, stateFile(workerInfo, 'customer')));
+    },
+    { scope: 'worker' },
+  ],
+
+  adminSession: [
+    async ({ api }, use, workerInfo) => {
+      await use(new AuthSession(api, env.admin, env.baseURL, stateFile(workerInfo, 'admin')));
     },
     { scope: 'worker' },
   ],
 
   userApi: async ({ api, authSession }, use) => {
     await use(api.withToken(await authSession.getToken()));
+  },
+
+  adminApi: async ({ api, adminSession }, use) => {
+    await use(api.withToken(await adminSession.getToken()));
   },
 });

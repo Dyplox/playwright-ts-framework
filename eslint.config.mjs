@@ -25,7 +25,7 @@ export default tseslint.config(
   {
     languageOptions: {
       parserOptions: {
-        projectService: { allowDefaultProject: ['eslint.config.mjs'] },
+        projectService: { allowDefaultProject: ['eslint.config.mjs', 'scripts/*.mjs'] },
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -47,12 +47,19 @@ export default tseslint.config(
       'playwright/prefer-web-first-assertions': 'error',
       'playwright/no-conditional-in-test': 'error',
       'playwright/require-top-level-describe': 'error',
+      // Skipping is allowed only with a runtime condition and a reason (e.g. shared environments).
+      'playwright/no-skipped-test': ['error', { allowConditional: true }],
       'playwright/expect-expect': ['warn', { assertFunctionNames: ['expect*'] }],
     },
   },
   {
-    files: ['eslint.config.mjs'],
+    files: ['eslint.config.mjs', 'scripts/**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
+  },
+  {
+    // Node scripts run by CI (plain JS, Node globals).
+    files: ['scripts/**/*.mjs'],
+    rules: { 'no-undef': 'off' },
   },
   prettier,
 );

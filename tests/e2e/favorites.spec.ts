@@ -2,7 +2,7 @@ import { test, expect } from '@fixtures';
 import { aPurchasableProduct } from '@data/catalog.queries';
 
 test.describe('Favorites', { tag: ['@e2e', '@regression'] }, () => {
-  test.use({ authenticated: true });
+  test.use({ role: 'customer' });
 
   test('a favorite created through the API shows up and can be removed in the UI', async ({
     api,
