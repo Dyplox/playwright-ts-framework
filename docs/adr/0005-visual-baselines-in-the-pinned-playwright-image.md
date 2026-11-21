@@ -13,7 +13,9 @@ Screenshots differ across operating systems, font sets and browser builds. Basel
 - Visual tests run in Chromium only, on three viewport projects (mobile, tablet, desktop).
 - In CI they run inside `mcr.microsoft.com/playwright:v<version>-noble`, the version read from
   `package.json` (`scripts/playwright-docker.sh`). Baselines are created by the **Update visual baselines**
-  workflow in the same image and committed (`*-linux.png`).
+  workflow in the same image and committed (`*-linux.png`) through a pull request: `main` is protected, so the
+  workflow pushes a branch, opens the PR and dispatches CI on it (the only event a `GITHUB_TOKEN` push can
+  trigger).
 - Local macOS/Windows baselines are allowed for development but git-ignored.
 - Stability: fonts and images awaited, animations disabled, volatile widgets hidden with `stylePath`,
   screenshots in CSS pixels.

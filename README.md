@@ -137,12 +137,25 @@ flowchart LR
 2. **SonarCloud:** import the repo (organization `dyplox`, key `Dyplox_playwright-ts-framework`, or edit
    [`sonar-project.properties`](sonar-project.properties)), disable "Automatic Analysis" and add the
    `SONAR_TOKEN` secret. Without it the job is skipped with a notice.
-3. **Visual baselines:** run the **Update visual baselines** workflow once (and whenever a UI change is
-   intentional).
-4. **Branch protection** (ruleset requiring `CI result` and PRs on `main`):
+3. **Let workflows open PRs** (needed by _Update visual baselines_):
+   ```bash
+   gh api -X PUT repos/Dyplox/playwright-ts-framework/actions/permissions/workflow \
+     -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true
+   ```
+4. **Protect `main`** (changes only through PRs, required check `CI result`, no force-push or deletion):
    ```bash
    gh api -X POST repos/Dyplox/playwright-ts-framework/rulesets --input .github/rulesets/main.json
    ```
+
+### Updating visual baselines
+
+Run **Actions → Update visual baselines**. It renders the screenshots in the pinned Playwright image and:
+
+- run on `main` → pushes them to a new `chore/visual-baselines-*` branch and opens a PR;
+- run on your PR's branch → commits them to that branch.
+
+In both cases it then dispatches CI on that branch, so the PR gets its required `CI result` check (pushes made
+with `GITHUB_TOKEN` don't trigger workflows, `workflow_dispatch` does). Review the PNG diffs before merging.
 
 ## Project structure
 
