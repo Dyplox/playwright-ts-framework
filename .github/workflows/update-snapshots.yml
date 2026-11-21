@@ -1,0 +1,41 @@
+name: Update visual baselines
+
+# Regenerates the Linux screenshots in the pinned Playwright image and commits them to the
+# selected branch. Run it once after the first push, and whenever a UI change is intentional.
+on:
+  workflow_dispatch:
+    inputs:
+      projects:
+        description: 'Viewport projects to update'
+        required: false
+        default: '--project=visual-mobile --project=visual-tablet --project=visual-desktop'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Start Toolshop (Docker)
+        run: ./scripts/toolshop.sh up
+      - name: Render baselines
+        run: ./scripts/playwright-docker.sh ${{ inputs.projects }} --update-snapshots=all --reporter=list
+      - name: Commit baselines
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/__screenshots__
+          if git diff --cached --quiet; then
+            echo "Baselines unchanged."
+          else
+            git commit -m "test(visual): update Linux baselines"
+            git push
+          fi

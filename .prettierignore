@@ -7,3 +7,8 @@ allure-report
 .auth
 package-lock.json
 .toolshop
+lhci-report
+.lighthouseci
+site
+tests/__screenshots__
+eslint-report.json

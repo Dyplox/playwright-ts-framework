@@ -71,6 +71,24 @@ export interface Favorite {
   product?: Product;
 }
 
+export interface PostcodeLookup {
+  street: string;
+  house_number: string;
+  city: string;
+  state: string;
+  country: string;
+  postcode: string;
+}
+
+export interface Invoice {
+  id: string;
+  invoice_number: string;
+  invoice_date: string;
+  total: number;
+  billing_street: string;
+  status: string;
+}
+
 export interface Cart {
   id: string;
   cart_items: Array<{ id: string; quantity: number; product_id: string; product?: Product }>;

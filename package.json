@@ -1,6 +1,6 @@
 {
   "name": "playwright-ts-framework",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "E2E framework with Playwright + TypeScript against Practice Software Testing (Toolshop): fixtures, API-seeded data, accessibility, visual regression and sharded CI.",
   "license": "MIT",
@@ -9,11 +9,17 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "playwright test",
+    "test": "playwright test --project=api --project=chromium --project=firefox --project=webkit",
     "test:smoke": "playwright test --grep @smoke",
+    "test:e2e": "playwright test --grep @e2e --project=chromium --project=firefox --project=webkit",
+    "test:mock": "playwright test --grep @mock --project=chromium",
+    "test:a11y": "playwright test --grep @a11y --project=chromium",
+    "test:visual": "playwright test --project=visual-mobile --project=visual-tablet --project=visual-desktop",
+    "test:visual:update": "playwright test --project=visual-mobile --project=visual-tablet --project=visual-desktop --update-snapshots",
     "test:chromium": "playwright test --project=chromium",
-    "test:public": "cross-env TEST_ENV=public playwright test --grep @smoke",
+    "test:public": "cross-env TEST_ENV=public playwright test --grep @smoke --project=api --project=chromium",
     "test:headed": "playwright test --headed --project=chromium",
+    "lighthouse": "lhci autorun",
     "report": "playwright show-report",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
     "allure:open": "allure open allure-report",
@@ -25,8 +31,10 @@
     "quality": "npm run typecheck && npm run lint && npm run format:check"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^10.0.0",
     "@faker-js/faker": "^10.6.0",
+    "@lhci/cli": "^0.16.1",
     "@playwright/test": "1.65.1",
     "@types/node": "^24.0.0",
     "allure-commandline": "^2.46.1",

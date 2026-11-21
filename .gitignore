@@ -8,5 +8,12 @@ node_modules/
 .env
 .DS_Store
 /.toolshop/
+/lhci-report/
+/.lighthouseci/
+/site/
+eslint-report.json
+# Visual baselines are committed for Linux (CI) only; local OS baselines stay local.
+tests/__screenshots__/**/*-darwin.png
+tests/__screenshots__/**/*-win32.png
 .idea/
 _to_delete/

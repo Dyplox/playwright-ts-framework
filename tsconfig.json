@@ -22,7 +22,10 @@
       "@fixtures": ["./src/fixtures/index.ts"],
       "@data/*": ["./src/data/*"],
       "@config/*": ["./src/config/*"],
-      "@utils/*": ["./src/utils/*"]
+      "@utils/*": ["./src/utils/*"],
+      "@mocks/*": ["./src/mocks/*"],
+      "@a11y/*": ["./src/a11y/*"],
+      "@visual/*": ["./src/visual/*"]
     }
   },
   "include": ["./src/**/*.ts", "tests/**/*.ts", "playwright.config.ts", "eslint.config.mjs"]

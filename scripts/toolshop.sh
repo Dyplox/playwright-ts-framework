@@ -43,7 +43,9 @@ seed() {
   local out
   for _ in $(seq 1 30); do
     if out=$("${COMPOSE[@]}" exec -T laravel-api php artisan migrate:fresh --seed --force 2>&1); then
-      echo "Database migrated and seeded"
+      # Cached API responses would still point at the previous seed's ids.
+      "${COMPOSE[@]}" exec -T laravel-api php artisan cache:clear > /dev/null
+      echo "Database migrated, seeded and cache cleared"
       return 0
     fi
     echo "Database not ready yet, retrying..."; sleep 3

@@ -1,5 +1,15 @@
 import { expect, type APIRequestContext, type APIResponse } from '@playwright/test';
-import type { Cart, Favorite, LoginResponse, NewUser, Paginated, Product, User } from './types';
+import type {
+  Cart,
+  Favorite,
+  Invoice,
+  LoginResponse,
+  NewUser,
+  Paginated,
+  PostcodeLookup,
+  Product,
+  User,
+} from './types';
 
 type Query = Record<string, string | number | boolean>;
 
@@ -53,6 +63,20 @@ export class ApiClient {
 
   async listFavorites(): Promise<Favorite[]> {
     return this.get<Favorite[]>('/favorites');
+  }
+
+  // ---------- address lookup ----------
+  async postcodeLookup(country: string, postcode: string, houseNumber?: string): Promise<PostcodeLookup> {
+    return this.get<PostcodeLookup>('/postcode-lookup', {
+      country,
+      postcode,
+      ...(houseNumber ? { house_number: houseNumber } : {}),
+    });
+  }
+
+  // ---------- invoices ----------
+  async listInvoices(): Promise<Paginated<Invoice>> {
+    return this.get<Paginated<Invoice>>('/invoices');
   }
 
   // ---------- cart ----------

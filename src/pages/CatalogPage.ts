@@ -6,6 +6,8 @@ import { ProductCardComponent } from '../components/ProductCardComponent';
 export class CatalogPage {
   readonly header: HeaderComponent;
   readonly cards: Locator;
+  /** Placeholder cards rendered while the listing is loading. */
+  readonly skeletons: Locator;
   readonly searchInput: Locator;
   readonly searchSubmit: Locator;
   readonly searchTerm: Locator;
@@ -15,6 +17,7 @@ export class CatalogPage {
   constructor(private readonly page: Page) {
     this.header = new HeaderComponent(page);
     this.cards = page.locator('a.card[data-test^="product-"]');
+    this.skeletons = page.locator('.card.skeleton');
     this.searchInput = page.getByTestId('search-query');
     this.searchSubmit = page.getByTestId('search-submit');
     this.searchTerm = page.getByTestId('search-term');

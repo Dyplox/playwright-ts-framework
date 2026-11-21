@@ -1,0 +1,25 @@
+/*
+ * Injected only while taking screenshots (playwright.config.ts > expect.toHaveScreenshot.stylePath).
+ * Hides content that changes between runs and is not part of the layout under test.
+ */
+
+/* Floating widgets with live data (shop activity feed, chat). */
+app-live-activity-widget,
+app-chat-widget {
+  display: none !important;
+}
+
+/* Footer build line: "vX | Built <date> | Angular <version>". */
+app-footer .container-fluid > .text-muted {
+  visibility: hidden !important;
+}
+
+/* Marketing banner only rendered in production builds. */
+[data-test='course-promo'] {
+  display: none !important;
+}
+
+/* Toast notifications fade in/out on their own timers. */
+#toast-container {
+  display: none !important;
+}

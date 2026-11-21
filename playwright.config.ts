@@ -23,6 +23,10 @@ const reporter: ReporterDescription[] = isCI
   ? [['blob'], ['github'], ['list'], allureReporter]
   : [['list'], ['html', { open: 'never' }], allureReporter];
 
+const API_TESTS = /tests[\\/]api[\\/]/;
+const A11Y_TESTS = /tests[\\/]a11y[\\/]/;
+const VISUAL_TESTS = /tests[\\/]visual[\\/]/;
+
 export default defineConfig({
   testDir: './tests',
   outputDir: './test-results',
@@ -31,9 +35,23 @@ export default defineConfig({
   retries: isCI ? 1 : 0,
   workers: isCI ? 2 : undefined,
   timeout: 30_000,
-  expect: { timeout: 7_000 },
   reporter,
   globalSetup: './src/config/global-setup.ts',
+
+  // Baselines per viewport project and per OS: Linux baselines (CI) are committed,
+  // local macOS/Windows baselines are git-ignored.
+  snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{arg}-{platform}{ext}',
+
+  expect: {
+    timeout: 7_000,
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.01,
+      animations: 'disabled',
+      caret: 'hide',
+      scale: 'css',
+      stylePath: './src/visual/screenshot.css',
+    },
+  },
 
   use: {
     baseURL: env.baseURL,
@@ -51,8 +69,38 @@ export default defineConfig({
   projects: [
     // Pure API checks don't need a browser: run them once, not three times.
     { name: 'api', testDir: './tests/api' },
-    { name: 'chromium', testIgnore: /tests[\\/]api[\\/]/, use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', testIgnore: /tests[\\/]api[\\/]/, use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit', testIgnore: /tests[\\/]api[\\/]/, use: { ...devices['Desktop Safari'] } },
+
+    // Functional suite in the three engines. axe results don't depend on the engine,
+    // so accessibility runs once (Chromium) to save CI minutes.
+    { name: 'chromium', testIgnore: [API_TESTS, VISUAL_TESTS], use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'firefox',
+      testIgnore: [API_TESTS, VISUAL_TESTS, A11Y_TESTS],
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      testIgnore: [API_TESTS, VISUAL_TESTS, A11Y_TESTS],
+      use: { ...devices['Desktop Safari'] },
+    },
+
+    // Visual regression: one engine (Chromium) x three viewports = "responsive" coverage.
+    { name: 'visual-mobile', testMatch: VISUAL_TESTS, use: { ...devices['Pixel 7'] } },
+    {
+      name: 'visual-tablet',
+      testMatch: VISUAL_TESTS,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 810, height: 1080 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      name: 'visual-desktop',
+      testMatch: VISUAL_TESTS,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+    },
   ],
 });
