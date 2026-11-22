@@ -1,7 +1,7 @@
 # playwright-ts-framework
 
-[![CI](https://github.com/Dyplox/playwright-ts-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/Dyplox/playwright-ts-framework/actions/workflows/ci.yml)
-[![Nightly](https://github.com/Dyplox/playwright-ts-framework/actions/workflows/nightly.yml/badge.svg)](https://github.com/Dyplox/playwright-ts-framework/actions/workflows/nightly.yml)
+[![CI](https://github.com/Dyplox/playwright-ts-framework/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/Dyplox/playwright-ts-framework/actions/workflows/ci.yml)
+[![Nightly](https://github.com/Dyplox/playwright-ts-framework/actions/workflows/nightly.yml/badge.svg?branch=main)](https://github.com/Dyplox/playwright-ts-framework/actions/workflows/nightly.yml)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Dyplox_playwright-ts-framework&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Dyplox_playwright-ts-framework)
 [![Reports](https://img.shields.io/badge/reports-GitHub%20Pages-0969da)](https://dyplox.github.io/playwright-ts-framework/)
 ![Playwright](https://img.shields.io/badge/Playwright-1.65-2EAD33?logo=playwright)
