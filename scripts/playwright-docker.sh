@@ -7,6 +7,8 @@
 #   ./scripts/playwright-docker.sh --project=visual-mobile --update-snapshots
 #
 # Linux only: needs --network host to reach Toolshop on localhost.
+# The repo is mounted at the SAME absolute path as on the host: blob reports record the test
+# directory, and `merge-reports` refuses to merge reports recorded under different paths.
 set -euo pipefail
 
 VERSION="$(node -p "require('@playwright/test/package.json').version")"
@@ -19,7 +21,7 @@ exec docker run --rm \
   -e HOME=/tmp \
   -e CI="${CI:-}" \
   -e TEST_ENV="${TEST_ENV:-local}" \
-  -v "$PWD":/work \
-  -w /work \
+  -v "$PWD":"$PWD" \
+  -w "$PWD" \
   "$IMAGE" \
   npx playwright test "$@"
