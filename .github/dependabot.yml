@@ -17,9 +17,18 @@ updates:
         patterns: ['allure-*', '@lhci/*']
       test-libraries:
         patterns: ['@axe-core/*', '@faker-js/*', 'zod', 'ajv*', 'dotenv', 'cross-env']
+    ignore:
+      # typescript-eslint 8.x only supports typescript <6.1. A TypeScript major breaks `npm ci`
+      # (ERESOLVE). Revisit when typescript-eslint declares support for the next major.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      # Types must match the Node runtime (.nvmrc = 22). Bump this together with .nvmrc.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
-    directory: /
+    # Workflows AND the composite actions they use, so versions never drift apart.
+    directories: ['/', '/.github/actions/*']
     schedule:
       interval: weekly
       day: monday
