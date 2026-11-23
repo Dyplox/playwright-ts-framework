@@ -8,6 +8,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript)
 ![Browsers](https://img.shields.io/badge/browsers-Chromium%20%7C%20Firefox%20%7C%20WebKit-informational)
 ![WCAG](https://img.shields.io/badge/WCAG-2.1%20AA-blueviolet)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 End-to-end test framework built with **Playwright + TypeScript** against
 [Practice Software Testing – Toolshop](https://practicesoftwaretesting.com), a realistic Angular + Laravel
@@ -281,3 +282,8 @@ Smaller ones:
 - [x] Delivery: sharded CI, merged reports on GitHub Pages, Allure history, nightly, SonarCloud
 - [x] API contracts, roles, data-driven payments, i18n, unit tests, flaky detection, PR summaries, ADRs
 - [ ] AI-assisted testing with Playwright MCP / test agents (planner, generator, healer)
+
+## License
+
+[MIT](LICENSE) © 2026 Abel Fernando Gutiérrez Arias. Toolshop (the application under test) belongs to
+[Testsmith](https://github.com/testsmith-io/practice-software-testing) and keeps its own license.
