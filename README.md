@@ -270,8 +270,9 @@ Smaller ones:
   platform settings (WebKit on macOS skips links on Tab); the functional suite still runs in all three engines.
 - **Why Lighthouse performance as a warning?** The Toolshop image serves Angular with its dev server (unminified,
   uncompressed: ~5.5 MB of JavaScript), so absolute performance numbers reflect the environment more than the app.
-  Accessibility and best practices are hard gates; Core Web Vitals use the "good" thresholds as targets and the
-  script budget (6 MB) acts as a regression guard.
+  Accessibility and best practices are hard gates (≥ 0.90; `/auth/register` ≥ 0.88: it measures 0.91 on CI and
+  its known defects leave no margin). Performance (≥ 0.45, measured 0.52–0.61 on CI) and the script budget
+  (6 MB) act as regression guards; Core Web Vitals keep the "good" thresholds as targets.
 
 ## Roadmap
 
