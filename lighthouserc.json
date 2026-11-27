@@ -15,7 +15,6 @@
       }
     },
     "assert": {
-      "aggregationMethod": "median-run",
       "assertMatrix": [
         {
           "matchingUrlPattern": "^(?!.*/auth/register$).*$",
@@ -74,7 +73,8 @@
                 "maxNumericValue": 0
               }
             ]
-          }
+          },
+          "aggregationMethod": "median-run"
         },
         {
           "matchingUrlPattern": ".*/auth/register$",
@@ -133,7 +133,8 @@
                 "maxNumericValue": 0
               }
             ]
-          }
+          },
+          "aggregationMethod": "median-run"
         }
       ]
     },
