@@ -308,10 +308,11 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v5
 
-  # Single required check for branch protection: green only if every suite passed.
+  # Single required check for branch protection: green only if every suite passed
+  # and the merged reports were produced (a broken report must not go unnoticed).
   ci-result:
     name: CI result
-    needs: [quality, e2e, burn-in, visual, lighthouse]
+    needs: [quality, e2e, burn-in, visual, lighthouse, report]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
